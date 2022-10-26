@@ -5,7 +5,9 @@ import com.codestates.member.dto.MemberPostDto;
 import com.codestates.member.dto.MemberResponseDto;
 import com.codestates.member.entity.Member;
 import com.codestates.member.mapper.MemberMapper;
+import com.codestates.member.response.ErrorResponse;
 import com.codestates.member.service.MemberService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/v7/members")
 @Validated
+@Slf4j
 public class MemberController {
     private final MemberService memberService;
     private final MemberMapper mapper;
@@ -45,11 +49,6 @@ public class MemberController {
                 HttpStatus.CREATED);
     }
 
-    @ExceptionHandler
-    public ResponseEntity handleException(MethodArgumentNotValidException e) {
-        final List<FieldError>fieldErrors = e.getBindingResult().getFieldErrors();
-        return new ResponseEntity<>(fieldErrors, HttpStatus.BAD_REQUEST);
-    }
 
     @PatchMapping("/{member-id}")
     public ResponseEntity patchMember(
@@ -86,4 +85,22 @@ public class MemberController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+    @ExceptionHandler
+    public ResponseEntity handleException(MethodArgumentNotValidException e) {
+
+        final List<FieldError>fieldErrors = e.getBindingResult().getFieldErrors();
+        List<ErrorResponse.FieldError> errors =
+                fieldErrors.stream()
+                        .map(error -> new ErrorResponse.FieldError(
+                                error.getField(),
+                                error.getRejectedValue(),
+                                error.getDefaultMessage()))
+                        .collect(Collectors.toList());
+        return new ResponseEntity<>(new ErrorResponse(errors), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler
+    public ResponseEntity handleException(ConstraintViolationException e){
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+
 }
