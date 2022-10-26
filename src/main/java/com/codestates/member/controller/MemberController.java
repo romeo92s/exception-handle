@@ -8,7 +8,9 @@ import com.codestates.member.mapper.MemberMapper;
 import com.codestates.member.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -22,7 +24,7 @@ import java.util.stream.Collectors;
  * - Mapstruct Mapper 적용
  */
 @RestController
-@RequestMapping("/v6/members")
+@RequestMapping("/v7/members")
 @Validated
 public class MemberController {
     private final MemberService memberService;
@@ -41,6 +43,12 @@ public class MemberController {
 
         return new ResponseEntity<>(mapper.memberToMemberResponseDto(response),
                 HttpStatus.CREATED);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity handleException(MethodArgumentNotValidException e) {
+        final List<FieldError>fieldErrors = e.getBindingResult().getFieldErrors();
+        return new ResponseEntity<>(fieldErrors, HttpStatus.BAD_REQUEST);
     }
 
     @PatchMapping("/{member-id}")
