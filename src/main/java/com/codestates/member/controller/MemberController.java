@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * - Mapstruct Mapper 적용
  */
 @RestController
-@RequestMapping("/v5/members")
+@RequestMapping("/v6/members")
 @Validated
 public class MemberController {
     private final MemberService memberService;
